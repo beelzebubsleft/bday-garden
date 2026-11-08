@@ -1,0 +1,66 @@
+-- =====================================================================
+-- nas's garden: Supabase setup
+--
+-- How to run:
+--   1. Go to your project at https://supabase.com/dashboard
+--   2. Click "SQL Editor" in the left sidebar, then "New query"
+--   3. Paste this whole file and click "Run"
+--
+-- Safe to run again: it replaces the policies and keeps existing data.
+-- =====================================================================
+
+
+-- 1. The table that stores each sheep or cat on the island
+create table if not exists public.sheep (
+  id          uuid primary key default gen_random_uuid(),
+  image_url   text not null
+              check (image_url like '%/storage/v1/object/public/drawings/%'),
+  note        text not null default ''
+              check (char_length(note) <= 140),
+  x           real not null check (x between 0 and 400),
+  y           real not null check (y between 0 and 260),
+  created_at  timestamptz not null default now()
+);
+
+-- Anyone can read the table, anyone can add a row, and nobody can edit or delete.
+alter table public.sheep enable row level security;
+
+drop policy if exists "anyone can read sheep" on public.sheep;
+create policy "anyone can read sheep"
+  on public.sheep for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "anyone can add sheep" on public.sheep;
+create policy "anyone can add sheep"
+  on public.sheep for insert
+  to anon, authenticated
+  with check (true);
+
+
+-- 2. Storage bucket for the drawings (public, PNG only, 500 KB max)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('drawings', 'drawings', true, 512000, array['image/png'])
+on conflict (id) do update
+  set public = true,
+      file_size_limit = 512000,
+      allowed_mime_types = array['image/png'];
+
+-- Anyone can upload a PNG into the drawings bucket. Nobody can overwrite or delete.
+drop policy if exists "anyone can upload drawings" on storage.objects;
+create policy "anyone can upload drawings"
+  on storage.objects for insert
+  to anon, authenticated
+  with check (
+    bucket_id = 'drawings'
+    and lower(storage.extension(name)) = 'png'
+  );
+
+
+-- 3. Live updates: new sheep appear on everyone's screen without a refresh
+do $$
+begin
+  alter publication supabase_realtime add table public.sheep;
+exception
+  when duplicate_object then null; -- already added
+end $$;

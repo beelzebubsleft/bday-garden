@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nas's garden</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>nas's garden</h1>
+    </header>
+
+    <section class="layout">
+      <div class="island-wrap">
+        <svg id="island" viewBox="0 0 400 260" role="img" aria-label="A garden shaped like the numbers 29">
+          <defs>
+            <!-- Guests' sheep and cats are only visible inside the "29" shape -->
+            <clipPath id="shape">
+              <text x="140" y="200" text-anchor="middle" class="shape-text">2</text>
+              <text x="260" y="200" text-anchor="middle" class="shape-text">9</text>
+            </clipPath>
+
+            <!-- Gives the edges and grass a hand-drawn, wobbly look -->
+            <filter id="sketch" x="-10%" y="-10%" width="120%" height="120%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="noise"/>
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+          </defs>
+
+          <!-- Island body: built by script.js (thickness, base, sketched grass) -->
+          <g id="island-body"></g>
+
+          <!-- Sheep and cats, clipped to the 2 and the 9 -->
+          <g id="sheep" clip-path="url(#shape)"></g>
+
+          <!-- Notes, not clipped so they stay readable -->
+          <g id="labels"></g>
+        </svg>
+      </div>
+
+      <aside class="panel">
+        <h2>Add a sheep or cat to the garden :)</h2>
+
+        <div class="canvas-row">
+          <div class="palette" id="palette" role="radiogroup" aria-label="Brush color"></div>
+
+          <div class="pad-wrap">
+            <canvas id="pad" width="300" height="300" aria-label="Drawing pad"></canvas>
+            <button id="clear" type="button" title="Clear drawing" aria-label="Clear drawing">↺</button>
+          </div>
+        </div>
+
+        <label class="note-label" for="note">add a note</label>
+        <input id="note" type="text" maxlength="140" autocomplete="off">
+
+        <button id="enter" type="button">🐑 Enter</button>
+        <p id="status" role="status"></p>
+      </aside>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
